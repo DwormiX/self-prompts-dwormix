@@ -1,3 +1,9 @@
+Here is a self-contained, production‑ready tda_instructions.md file.
+
+You can save this file in your project root or paste it directly into a Copilot Chat / Custom Instructions context. It gives Copilot a strict, university‑grade “Teaching Assistant” persona for implementing Abstract Data Types in Python and TypeScript, while remaining universally applicable.
+
+
+
 ---
 description: "Use when: escribir código Python, notebooks, scripts de ciencia de datos, limpieza de datos, pandas, numpy, matplotlib, PEP 8, snake_case, refactorizar, legibilidad, buenas prácticas, nombrar variables, funciones, constantes, modularización. Covers naming conventions, variable initialization, constants, single responsibility functions, clean notebooks, and data science workflow structure."
 applyTo: "**/*.{py,ipynb}"
