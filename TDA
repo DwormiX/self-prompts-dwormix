@@ -1,0 +1,231 @@
+# TDA Strict Mode — 75.41 Algoritmos y Programación II (UBA)
+
+## Purpose
+This document instructs the AI (Copilot / Agent) to act as the **Implementer (Dijkstra)** while the user is the **Client (Knuth)**.  
+Every TDA you generate must follow the **“What vs. How”** separation, the **Contract‑first** design, and strict **Encapsulation**.
+
+---
+
+## Core Philosophical Rules
+
+1. **The “What” (Caja Negra / Black Box)**  
+   - The **functionality** exposed to the user.  
+   - The user only cares about *what* the operations do, never *how*.  
+
+2. **The “How” (Caja Blanca / White Box)**  
+   - The **implementation** (internal data structures, algorithms, memory management).  
+   - The user must **never** see or depend on these details.  
+
+3. **The Contract (El Contrato)**  
+   - The public interface (like a `.h` header) defines the operations, pre‑conditions, and post‑conditions.  
+   - The implementer guarantees the contract. The client uses **only** this contract.  
+
+4. **Encapsulation**  
+   - Expose the **absolute minimum** of internal state.  
+   - Hide the concrete class/struct; provide a **factory function** to create instances.  
+
+5. **Localization of Change**  
+   - Changing the internal representation (e.g., from `list` to `deque`) **must not** require any change to the user’s code.  
+
+---
+
+## Universal TDA Pattern (Language Agnostic)
+
+1. **Interface** – define the public operations (no fields).  
+2. **Factory** – a function that returns an instance of the interface.  
+3. **Implementation** – a hidden class/struct that fulfills the interface; its internal state is **inaccessible** to the user.  
+4. **Module Boundary** – export **only** the interface and the factory.
+
+---
+
+## Python Strict Template
+
+**File: `sube.py`** (only this file is imported by the user)
+
+```python
+from typing import Protocol, final
+
+# 1. EL QUÉ (The Contract / Caja Negra)
+# The user imports this Protocol.
+class Sube(Protocol):
+    """TDA Sube – Contrato."""
+    
+    def cargar(self, monto: float) -> None:
+        """Pre: monto > 0. Post: saldo incrementado."""
+        ...
+    
+    def saldo(self) -> float:
+        """Devuelve el saldo actual."""
+        ...
+    
+    def realizar_viaje(self, costo: float) -> None:
+        """Pre: saldo >= costo. Post: saldo decrementado."""
+        ...
+    
+    def destruir(self) -> None:
+        """Libera recursos asociados (ej. archivos, sockets)."""
+        ...
+
+# 2. EL CÓMO (Caja Blanca / Oculto)
+@final
+class _SubeImpl:
+    # __slots__ + double underscore for hard runtime encapsulation
+    __slots__ = ("__dni", "__saldo")
+    
+    def __init__(self, dni: str, saldo_inicial: float):
+        self.__dni = dni
+        self.__saldo = saldo_inicial
+
+    def cargar(self, monto: float) -> None:
+        if monto < 0:
+            raise ValueError("Monto inválido")   # Pre-condition
+        self.__saldo += monto
+
+    def saldo(self) -> float:
+        return self.__saldo
+
+    def realizar_viaje(self, costo: float) -> None:
+        if self.__saldo < costo:
+            raise ValueError("Saldo insuficiente")  # Post-condition
+        self.__saldo -= costo
+
+    def destruir(self) -> None:
+        # Cleanup if needed (close files, release external resources)
+        pass
+
+# 3. LA FÁBRICA (the only exported constructor)
+def crear_sube(dni: str, saldo_inicial: float = 0.0) -> Sube:
+    """El usuario (Knuth) usa ESTO. Nunca usa _SubeImpl."""
+    return _SubeImpl(dni, saldo_inicial)
+
+# 4. EXPORT CONTROL
+__all__ = ["Sube", "crear_sube"]
+
+Rules for Python:
+
+Never export the concrete class (_SubeImpl).
+
+The user cannot access __saldo (name mangling + __slots__).
+
+Always use a factory (crear_<tda>).
+
+Support explicit cleanup (destruir or context manager).
+
+
+
+TypeScript Strict Template
+File: sube.ts (only this module is imported)
+
+
+// 1. EL QUÉ (The Contract / Caja Negra)
+export interface ISube {
+    /** Pre: monto > 0. Post: saldo incrementado. */
+    cargar(monto: number): void;
+    saldo(): number;
+    /** Pre: saldo >= costo. */
+    realizarViaje(costo: number): void;
+    destruir(): void;
+}
+
+// 2. EL CÓMO (Caja Blanca / Oculto)
+// The class is NOT exported. It lives only inside this module.
+// # ensures runtime privacy.
+class SubeImpl implements ISube {
+    #dni: string;
+    #saldo: number;
+
+    constructor(dni: string, saldoInicial: number) {
+        this.#dni = dni;
+        this.#saldo = saldoInicial;
+    }
+
+    cargar(monto: number): void {
+        if (monto < 0) throw new Error("Monto inválido");
+        this.#saldo += monto;
+    }
+
+    saldo(): number {
+        return this.#saldo;
+    }
+
+    realizarViaje(costo: number): void {
+        if (this.#saldo < costo) {
+            throw new Error("Saldo insuficiente");
+        }
+        this.#saldo -= costo;
+    }
+
+    destruir(): void {
+        // Cleanup resources (e.g., abort fetch, close WebSocket)
+    }
+}
+
+// 3. LA FÁBRICA (the only exported constructor)
+export function crearSube(dni: string, saldoInicial: number = 0): ISube {
+    return new SubeImpl(dni, saldoInicial);
+}
+
+Rules for TypeScript:
+
+Never export the implementation class.
+
+Use # private fields for real runtime encapsulation.
+
+Export only the interface and the factory function.
+
+Explicit destruir method for resource cleanup (aligns with C philosophy).
+
+
+
+
+How Copilot / Agent Must Apply This
+When you are asked to implement any TDA (e.g., Pila, Cola, Complejo, Lista, Arbol):
+
+Define the Contract FIRST – write the Protocol (Python) or interface (TS) with full docstrings, including pre‑/post‑conditions.
+
+Write the Factory – always provide crear_<tda>() / create<Tda>() that returns the contract type.
+
+Hide the Class – name it _<Tda>Impl (Python) or keep it unexported (TS); hide all internal attributes with __ / #.
+
+Implement the logic – respect all pre‑/post‑conditions.
+
+Show a usage example – demonstrate Knuth’s code, proving he never touches internal fields.
+
+If the user asks to change the internal implementation (e.g., “use a linked list instead of an array”):
+
+Rewrite only the hidden class body.
+
+Do not change the public interface, the factory signature, or the example usage.
+
+
+
+The “Un Qué y Mil Cómos” Principle (Sabina)
+For a single interface, there can be infinite implementations:
+
+Array‑based vs. linked‑based Stack.
+
+Hash‑based vs. tree‑based Map.
+
+All implementations must share the exact same public contract. The user’s code must remain valid regardless of which implementation is injected.
+
+
+
+Glossary (for the Agent’s internal reasoning)
+Term	Meaning
+TDA (ADT)	Abstract Data Type – defined by its operations, not its implementation.
+Caja Negra	Black Box – the user’s view (functionality).
+Caja Blanca	White Box – the implementer’s view (internal code).
+Contrato	The public interface / header file.
+Implementador	The person who writes the hidden class.
+Usuario	The person who calls the factory and uses the interface.
+Localización del Cambio	The property that changes are isolated to the implementation.
+
+
+
+---
+
+**How to use this file:**
+
+- **Copilot Chat**: Paste the whole content into the chat and say “Use these instructions for all TDA tasks”.
+- **Copilot Custom Instructions**: Save as `TDA_STRICT_MODE.md` and reference it in your `.github/copilot-instructions.md` or include its content there.
+- **Repo Context**: Place it in your repository root – Copilot will read it if you open it alongside your code, or you can `@workspace` mention it.
