@@ -1,3 +1,7 @@
+Here is a self-contained, production‑ready tda_instructions.md file.
+
+You can save this file in your project root or paste it directly into a Copilot Chat / Custom Instructions context. It gives Copilot a strict, university‑grade “Teaching Assistant” persona for implementing Abstract Data Types in Python and TypeScript, while remaining universally applicable.
+
 # TDA Strict Mode — 75.41 Algoritmos y Programación II (UBA)
 
 ## Purpose
